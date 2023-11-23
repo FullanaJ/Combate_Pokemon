@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 public class Jugar extends AppCompatActivity {
 
     TextView attack,speciaAttack;
+    JugarViewModel.Callback callback;
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -26,28 +28,31 @@ public class Jugar extends AppCompatActivity {
         setContentView(R.layout.activity_jugar);
         JugarViewModel viewModel = new ViewModelProvider(this).get(JugarViewModel.class);
         viewModel.setPokemon1(new MutableLiveData<>(bundle.getSerializable("poke1",Pokemon.class)));
-        viewModel.setPokemon1(new MutableLiveData<>(bundle.getSerializable("poke2",Pokemon.class)));
+        viewModel.setPokemon2(new MutableLiveData<>(bundle.getSerializable("poke2",Pokemon.class)));
         attack = findViewById(R.id.attack);
+        callback = new JugarViewModel.Callback() {
+            @Override
+            public void atataca(String mensaje) {
+                Toast.makeText(getApplicationContext(),mensaje,Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void ganador(String mensaje) {
+                Toast.makeText(getApplicationContext(),mensaje,Toast.LENGTH_SHORT).show();
+                try {
+                    wait(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                startActivity(new Intent(getApplicationContext(),MainActivity.class));
+            }
+        };
         speciaAttack = findViewById(R.id.specialAttack);
         attack.setOnClickListener((l) ->{
-            
+            viewModel.attack(Pokemon.NORMAL_ATACK,callback);
         });
-    }
-}
-class JugarViewModel extends AndroidViewModel{
-
-    boolean atacando = false;
-    MutableLiveData<Pokemon> pokemon1;
-    MutableLiveData<Pokemon> pokemon2;
-    public JugarViewModel(@NonNull Application application) {
-        super(application);
-    }
-
-    public void setPokemon1(MutableLiveData<Pokemon> pokemon1) {
-        this.pokemon1 = pokemon1;
-    }
-
-    public void setPokemon2(MutableLiveData<Pokemon> pokemon2) {
-        this.pokemon2 = pokemon2;
+        speciaAttack.setOnClickListener((l) ->{
+            viewModel.attack(Pokemon.SPECIAL_ATACK,callback);
+        });
     }
 }
